@@ -18,17 +18,29 @@ local ModernUOLAbstract = class()
 
 ModernUOLAbstract.SupportedOrbwalkers = {
     [_G.PaidScript.AURORA_ORB] =
-        function()
-            return _G.AuroraOrb and _G.AuroraOrb.Enabled
-        end,
+        {
+            Name = "Aurora Orbwalker",
+            Valid =
+                function()
+                    return _G.AuroraOrb
+                end
+        },
     [_G.PaidScript.REBORN_ORB] =
-        function()
-            return _G.LegitOrbwalker
-        end,
+        {
+            Name = "Legit Orbwalker: Reborn",
+            Valid =
+                function()
+                    return _G.LegitOrbwalker
+                end
+        },
     [_G.PaidScript.RMAN_LOADER] =
-        function()
-            return _G.LegitOrbwalker -- RMAN supports same exact API
-        end
+        {
+            Name = "Legit Orbwalker: Reborn",
+            Valid =
+                function()
+                    return _G.LegitOrbwalker -- RMAN supports same exact API
+                end
+        },
 }
 
 function ModernUOLAbstract:init()
@@ -43,6 +55,10 @@ function ModernUOLAbstract:init()
     _G.AddEvent(_G.Events.OnTick, function() self:OnTick() end)
 end
 
+function ModernUOLAbstract:Print(text)
+    _G.PrintChat('<font color=\'#9391FF\'><b>[ModernUOL] </b></font> <font color=\'#FDFF91\'>' .. tostring(text) .. '</font>')
+end
+
 function ModernUOLAbstract:InitMenu()
     if self.Menu then return end
 
@@ -50,11 +66,16 @@ function ModernUOLAbstract:InitMenu()
 end
 
 function ModernUOLAbstract:OnTick()
-    if not self.DefaultOrb.Val or self.DefaultOrb.Loaded then return end
+    if self.DefaultOrb.Loaded or (not self.DefaultOrb.Val) then
+        return
+    end
 
     if os.clock() >= self.DefaultOrb.Time then
-        _G.PrintChat("No orbwalker loaded. Loading default orbwalker..")
-        _G.LoadPaidScriptAsync(_G.DefaultOrb.Val, function() end)
+        local orb_name = ModernUOLAbstract.SupportedOrbwalkers[self.DefaultOrb.Val].Name
+
+        self:Print("No orbwalker found. Loading default orbwalker (" .. orb_name .. ").")
+        _G.LoadPaidScriptAsync(self.DefaultOrb.Val, function() end)
+
         self.DefaultOrb.Loaded = true
     end
 end
@@ -62,7 +83,7 @@ end
 function ModernUOLAbstract:SetDefaultOrbwalker(val, time)
     assert(ModernUOLAbstract.SupportedOrbwalkers[val], "SetDefaultOrbwalker: Given orbwalker not supported.")
 
-    time = time or 10
+    time = math.min(10, time or 10)
     self.DefaultOrb.Val = val
     self.DefaultOrb.Time = os.clock() + time
 end
@@ -70,21 +91,25 @@ end
 function ModernUOLAbstract:OnAsyncLoad(val)
     if self.ActiveOrb then return end
 
-    local func = ModernUOLAbstract.SupportedOrbwalkers[val]
+    local valid_func = ModernUOLAbstract.SupportedOrbwalkers[val].Valid
 
-    if func and func() then
+    if valid_func and valid_func() then
         self.ActiveOrb = val
 
         for i = 1, #self.OrbLoadCallbacks do
-            self.OrbLoadCallbacks[#self.OrbLoadCallbacks + 1](val)
+            self.OrbLoadCallbacks[i](val)
         end
     end
 end
 
 function ModernUOLAbstract:OnOrbLoad(callback)
+    if self.ActiveOrb then
+        callback(self.ActiveOrb)
+        return
+    end
+
     self.OrbLoadCallbacks[#self.OrbLoadCallbacks + 1] = callback
 end
-
 
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,7 +237,6 @@ end
 function ModernUOL:IsBlockedMove()
     return self.OrbState.BlockMove
 end
-
 
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
