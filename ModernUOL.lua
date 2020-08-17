@@ -66,7 +66,7 @@ function ModernUOLAbstract:InitMenu()
 end
 
 function ModernUOLAbstract:OnTick()
-    if self.DefaultOrb.Loaded or (not self.DefaultOrb.Val) then
+    if self.ActiveOrb or self.DefaultOrb.Loaded or (not self.DefaultOrb.Val) then
         return
     end
 
