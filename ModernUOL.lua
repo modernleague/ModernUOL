@@ -44,11 +44,11 @@ ModernUOLAbstract.SupportedOrbwalkers = {
 }
 
 function ModernUOLAbstract:init()
+    self.requireAuroraOrbAPI = false
     self.LoadTime = os.clock()
     self.OrbLoadCallbacks = {}
     self.ActiveOrb = nil
     self.DefaultOrb = {Val = nil, Time = nil, Loaded = false}
-
     self:InitMenu()
 
     _G.RegisterPaidAsyncCallback(function(...) self:OnAsyncLoad(...) end)
@@ -89,17 +89,35 @@ function ModernUOLAbstract:SetDefaultOrbwalker(val, time)
 end
 
 function ModernUOLAbstract:OnAsyncLoad(val)
+    if val == _G.PaidScript.AURORA_ORB then
+        self.AuroraOrbApi = _G.AuroraOrb
+    end
+
+    if self.ActiveOrb ~= nil and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB and val == _G.PaidScript.AURORA_ORB then
+        for i = 1, #self.OrbLoadCallbacks do
+            self.OrbLoadCallbacks[i](val)
+        end
+    end
+
     if self.ActiveOrb then return end
 
     local valid_func = ModernUOLAbstract.SupportedOrbwalkers[val].Valid
 
     if valid_func and valid_func() then
         self.ActiveOrb = val
-
-        for i = 1, #self.OrbLoadCallbacks do
-            self.OrbLoadCallbacks[i](val)
+        
+        if self.requireAuroraOrbAPI and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB then
+            _G.LoadPaidScriptAsync(_G.PaidScript.AURORA_ORB, function() end)
+        else
+            for i = 1, #self.OrbLoadCallbacks do
+                self.OrbLoadCallbacks[i](val)
+            end
         end
     end
+end
+
+function ModernUOLAbstract:RequireAuroraOrbAPI()
+    self.requireAuroraOrbAPI = true
 end
 
 function ModernUOLAbstract:OnOrbLoad(callback)
@@ -130,6 +148,8 @@ end
 function ModernUOL:IsAttacking()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:IsAttacking()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:IsAttacking()
     end
 end
 
@@ -142,6 +162,8 @@ end
 function ModernUOL:IsOrbWalking()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:IsOrbWalking()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:IsOrbwalking()
     end
 end
 
@@ -154,6 +176,8 @@ end
 function ModernUOL:CanAttack()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:CanAttack()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:CanAttack()
     end
 end
 
@@ -166,6 +190,8 @@ end
 function ModernUOL:CanMove()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:CanMove()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:CanMove()
     end
 end
 
@@ -179,6 +205,8 @@ end
 function ModernUOL:MoveTo(position)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:MoveTo(position)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:Move(position)
     end
 end
 
@@ -192,6 +220,8 @@ end
 function ModernUOL:Attack(object)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:Attack(object)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:Attack(object)
     end
 end
 
@@ -200,11 +230,13 @@ end
     Parameter:
         1. boolean
     Return: nil
-    Comment: Block orbwalker attack
+    Comment: Block/Unblock orbwalker attack
 --]]
 function ModernUOL:BlockAttack(bool)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:BlockAttack(bool)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:BlockAttack(bool)
     end
 end
 
@@ -213,11 +245,13 @@ end
     Parameter:
         1. boolean
     Return: nil
-    Comment: Block Orbwalker movement
+    Comment: Block/Unblock Orbwalker movement
 --]]
 function ModernUOL:BlockMove(bool)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:BlockMove(bool)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:BlockMove(bool)
     end
 end
 
@@ -230,6 +264,8 @@ end
 function ModernUOL:IsAttackBlocked()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:IsAttackBlocked()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:IsAttackBlocked()
     end
 end
 
@@ -242,18 +278,27 @@ end
 function ModernUOL:IsMoveBlocked()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:IsMoveBlocked()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:IsMoveBlocked()
     end
 end
 
 --[[
     function: ModernUOL:GetMode()
     Parameter: None
-    Return: string ("Combo", "Waveclear", "Harass", "Lasthit", "none")
+    Return: string ("Combo", "Waveclear", "Harass", "Lasthit", "Support", "none")
     Comment: Return active orbwalker mode
 --]]
 function ModernUOL:GetMode()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetMode()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        if _G.AuroraOrb.Orbwalker:IsComboKeyPress() then return "Combo"
+        elseif _G.AuroraOrb.Orbwalker:IsLaneClearKeyPress() then return "Waveclear"
+        elseif _G.AuroraOrb.Orbwalker:IsLastHitKeyPress() then return "Lasthit"
+        elseif _G.AuroraOrb.Orbwalker:IsSupportKeyPress() then return "Support"
+        elseif _G.AuroraOrb.Orbwalker:IsMixedKeyPress() then return "Harass"
+        else return "none" end
     end
 end
 
@@ -266,6 +311,8 @@ end
 function ModernUOL:ResetAA()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:ResetAA()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:ResetAttack()
     end
 end
 
@@ -273,11 +320,13 @@ end
     function: ModernUOL:GetTarget(range, position)
     Parameter: int, D3DXVECTOR3
     Return: gameObject or nil
-    Comment: Return current orbwalker target (minions/structures included)
+    Comment: Return current orbwalker target (minions/structures included for LegitOrb)
 --]]
 function ModernUOL:GetTarget(range, position)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetTarget(range, position)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.TargetSelector:Get(range, position)
     end
 end
 
@@ -290,6 +339,8 @@ end
 function ModernUOL:GetHeroTarget(range, position)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetHeroTarget(range, position)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.TargetSelector:Get(range, position)
     end
 end
 
@@ -302,6 +353,8 @@ end
 function ModernUOL:SetTarget(target, time)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:SetTarget(target, time)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:SetTarget(target, time)
     end
 end
 
@@ -314,6 +367,8 @@ end
 function ModernUOL:UnSetTarget()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:UnSetTarget()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:UnSetTarget()
     end
 end
 
@@ -326,6 +381,8 @@ end
 function ModernUOL:GetForcedTarget()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetForcedTarget()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:GetForcedTarget()
     end
 end
 
@@ -338,6 +395,8 @@ end
 function ModernUOL:WaitingForMinion()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:WaitingForMinion()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:WaitingForMinion()
     end
 end
 
@@ -350,18 +409,22 @@ end
 function ModernUOL:GetMinions()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetMinions()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Minion:GetEnemy(function(a) return _G.AuroraOrb.Minion:IsLaneMinion(a) end)
     end
 end
 
 --[[
     function: ModernUOL:HpPred(unit, time)
-    Parameter: gameObject, time (sec/ms ?)
+    Parameter: gameObject, time (sec)
     Return: float
     Comment: Return predicted unit health after the given time
 --]]
 function ModernUOL:HpPred(unit, time)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:HpPred(unit, time)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Health:Get(unit, time * 1000)
     end
 end
 
@@ -369,11 +432,13 @@ end
     function: ModernUOL:AutoAttackCooldown()
     Parameter: None
     Return: float
-    Comment: Return the next auto attack time
+    Comment: Return the next auto attack time in second
 --]]
 function ModernUOL:AutoAttackCooldown()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:AutoAttackCooldown()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:GetAutoAttackCooldownRemaining()
     end
 end
 
@@ -386,6 +451,8 @@ end
 function ModernUOL:AutoAttackOnCooldown()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:AutoAttackOnCooldown()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:AutoAttackOnCooldown()
     end
 end
 
@@ -398,6 +465,8 @@ end
 function ModernUOL:AttackSpeed()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:AttackSpeed()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.MyHero:GetAttackSpeed()
     end
 end
 
@@ -410,6 +479,8 @@ end
 function ModernUOL:GetProjectileSpeed(gameObject)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetProjectileSpeed(gameObject)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:GetProjectileSpeed(gameObject)
     end
 end
 
@@ -430,6 +501,14 @@ end
 function ModernUOL:AddCallback(callback, func)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:AddCallback(callback, func)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        if callback == "OnUnKillable" then return _G.AuroraOrb.Orbwalker:RegisterOnMinionNonLastHitableFunction(func)
+        elseif callback == "OnAttack" then return _G.AuroraOrb.Orbwalker:RegisterOnPreAttackFunction(func)
+        elseif callback == "OnAfterAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnPostAttackFunction(func)
+        elseif callback == "OnBeforeAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnPreAttackFunction(func)
+        elseif callback == "OnBeforeMovement" then return  _G.AuroraOrb.Orbwalker:RegisterOnBeforeMovementFunction(func)
+        elseif callback == "CanMove" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanMoveFunction(func)
+        elseif callback == "CanAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanAttackFunction(func) end
     end
 end
 
@@ -442,6 +521,8 @@ end
 function ModernUOL:RemoveCallback(func)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:RemoveCallback(func)
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:RemoveCallback(func)
     end
 end
 
@@ -454,8 +535,14 @@ end
 function ModernUOL:GetCallbacks()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetCallbacks()
+    elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
+        return _G.AuroraOrb.Orbwalker:GetCallbacks()
     end
 end
+
+--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-- SPECIFIC AURORAORB
 
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
