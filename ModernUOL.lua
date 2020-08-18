@@ -35,7 +35,7 @@ ModernUOLAbstract.SupportedOrbwalkers = {
         },
     [_G.PaidScript.RMAN_LOADER] =
         {
-            Name = "Legit Orbwalker: Reborn",
+            Name = "RMAN Orbwalker",
             Valid =
                 function()
                     return _G.LegitOrbwalker -- RMAN supports same exact API
