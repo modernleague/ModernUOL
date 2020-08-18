@@ -1,7 +1,7 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.000
+local version = 1.002
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', COMMON_PATH, function(success)
@@ -116,7 +116,7 @@ function ModernUOLAbstract:OnAsyncLoad(val)
 
     if self.ActiveOrb then return end
 
-    local valid_func = ModernUOLAbstract.SupportedOrbwalkers[val].Valid
+    local valid_func = ModernUOLAbstract.SupportedOrbwalkers[val] and ModernUOLAbstract.SupportedOrbwalkers[val].Valid
 
     if valid_func and valid_func() then
         self.ActiveOrb = val
@@ -335,27 +335,27 @@ end
     function: ModernUOL:GetTarget(range, position)
     Parameter: int, D3DXVECTOR3
     Return: gameObject or nil
-    Comment: Return current orbwalker target (minions/structures included for LegitOrb)
+    Comment: Return hero target
 --]]
 function ModernUOL:GetTarget(range, position)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
-        return _G.LegitOrbwalker:GetTarget(range, position)
+        return _G.LegitOrbwalker:GetHeroTarget(range, position)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.TargetSelector:Get(range, position)
     end
 end
 
 --[[
-    function: ModernUOL:GetHeroTarget(range, position)
-    Parameter: int, D3DXVECTOR3
+    function: ModernUOL:GetCurrentTarget()
+    Parameter: None
     Return: gameObject or nil
-    Comment: Returns hero target
+    Comment: Returns the current orbwalker target (can be all unit)
 --]]
-function ModernUOL:GetHeroTarget(range, position)
+function ModernUOL:GetCurrentTarget()
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
-        return _G.LegitOrbwalker:GetHeroTarget(range, position)
+        return _G.LegitOrbwalker:GetTarget()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
-        return _G.AuroraOrb.TargetSelector:Get(range, position)
+        return _G.AuroraOrb.Orbwalker:GetCurrentTarget()
     end
 end
 

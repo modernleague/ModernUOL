@@ -21,8 +21,8 @@ Class UOL
     function IsMoveBlocked() -- Return if orbwalker movement is currently blocked
     function GetMode() -- Return active orbwalker mode ("Combo", "Waveclear", "Harass", "Lasthit", "Support", "none")
     function ResetAA() -- Reset orbwalker auto attack cooldown
-    function GetTarget(range, position) -- Return current orbwalker target (minions/structures included for LegitOrb)
-    function GetHeroTarget(range, position) -- Returns hero target
+    function GetTarget(range, position) -- Return hero target
+    function GetCurrentTarget() --  Returns the current orbwalker target (can be all unit)
     function SetTarget(target, time) -- Force Orbwalker to target the given gameOject during time (time is optional)
     function UnSetTarget() -- Unset the forced target
     function GetForcedTarget() --  Get forced target object
