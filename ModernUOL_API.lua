@@ -5,7 +5,10 @@ Class UOL
     -- Initialization functions
     function SetDefaultOrbwalker(paidscript_index, second) -- Will set the default orbwalker to load if no orbwalker manualy loaded in the given second time
         -- paidscript_index: _G.PaidScript.AURORA_ORB, _G.PaidScript.REBORN_ORB
-    function RequireAuroraOrbAPI() -- Will force the library to load AuroraOrbAPI if it's another Orbwalker loaded (So you can still have access to the Utility API)
+    function RequireOrbApi(paidscript_index) -- Will force the library to load AuroraOrbAPI if it's another Orbwalker loaded (So you can still have access to the Utility API)
+        -- paidscript_index: _G.PaidScript.AURORA_ORB
+    function GetOrbApi(paidscript_index)
+        -- paidscript_index: _G.PaidScript.AURORA_ORB
     function OnOrbLoad(entrypoint_function) -- Set your OnLoad function here, this will fire when the library will found one orbwalker loaded
 
     -- Orbwalkers functions
@@ -45,8 +48,8 @@ Class UOL
     function RemoveCallback(func) -- Remove a function from callback
     function GetCallbacks() -- Get table of registered callback
 
-    -- AuroraOrbApi function , ONLY if RequireAuroraOrbAPI() set
-    class AuroraOrbApi
+    -- AuroraOrbApi function - Need RequireOrbApi(_G.PaidScript.AURORA_ORB)
+    function GetOrbApi(_G.PaidScript.AURORA_ORB) -- Get AuroraOrb class access
         Class Hero
             function GetAll(validator_func) -- Get all heroes including special objects (zac blob)
             function GetAlly(validator_func) -- Get ally heroes including special objects (zac blob)

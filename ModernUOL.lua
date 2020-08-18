@@ -1,7 +1,7 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.002
+local version = 1.003
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', COMMON_PATH, function(success)
@@ -59,7 +59,8 @@ ModernUOLAbstract.SupportedOrbwalkers = {
 }
 
 function ModernUOLAbstract:init()
-    self.requireAuroraOrbAPI = false
+    -- self.requireAuroraOrbAPI = false
+    self.RequireAPI = { }
     self.LoadTime = os.clock()
     self.OrbLoadCallbacks = {}
     self.ActiveOrb = nil
@@ -103,16 +104,45 @@ function ModernUOLAbstract:SetDefaultOrbwalker(val, time)
     self.DefaultOrb.Time = os.clock() + time
 end
 
+function ModernUOLAbstract:AllRequireApiLoaded()
+    for _, data in pairs(self.RequireAPI) do
+        if not data.loaded then return false end
+    end
+
+    return true
+end
+
 function ModernUOLAbstract:OnAsyncLoad(val)
+    if self.ActiveOrb and self:AllRequireApiLoaded() then return end
+
+    -- AuroraBot loaded, set class to variable
     if val == _G.PaidScript.AURORA_ORB then
         self.AuroraOrbApi = _G.AuroraOrb
     end
 
-    if self.ActiveOrb ~= nil and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB and val == _G.PaidScript.AURORA_ORB then
+    -- If it's a required script loaded mark it as loaded
+    for _, data in pairs(self.RequireAPI) do
+        if data.index == val then data.loaded = true end
+    end
+
+    -- Orbwalker Loaded, check for require api loaded
+    if self.ActiveOrb and #self.RequireAPI > 0 then
+        for _, data in pairs(self.RequireAPI) do
+            if not data.loaded then return end
+        end
+
+        -- All required orb loaded, fire the on load champ script
         for i = 1, #self.OrbLoadCallbacks do
             self.OrbLoadCallbacks[i](val)
         end
+
     end
+
+    -- if self.ActiveOrb ~= nil and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB and val == _G.PaidScript.AURORA_ORB then
+    --     for i = 1, #self.OrbLoadCallbacks do
+    --         self.OrbLoadCallbacks[i](val)
+    --     end
+    -- end
 
     if self.ActiveOrb then return end
 
@@ -121,13 +151,24 @@ function ModernUOLAbstract:OnAsyncLoad(val)
     if valid_func and valid_func() then
         self.ActiveOrb = val
         
-        if self.requireAuroraOrbAPI and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB then
-            _G.LoadPaidScriptAsync(_G.PaidScript.AURORA_ORB, function() end)
-        else
+
+        if table.getn(self.RequireAPI) == 0 then -- No orb api needed, fire on load
             for i = 1, #self.OrbLoadCallbacks do
                 self.OrbLoadCallbacks[i](val)
             end
+        else
+            for _, data in pairs(self.RequireAPI) do
+                _G.LoadPaidScriptAsync(data.index, function() end)
+            end
         end
+
+        -- if self.requireAuroraOrbAPI and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB then
+        --     _G.LoadPaidScriptAsync(_G.PaidScript.AURORA_ORB, function() end)
+        -- else
+        --     for i = 1, #self.OrbLoadCallbacks do
+        --         self.OrbLoadCallbacks[i](val)
+        --     end
+        -- end
     end
 end
 
@@ -142,6 +183,19 @@ function ModernUOLAbstract:OnOrbLoad(callback)
     end
 
     self.OrbLoadCallbacks[#self.OrbLoadCallbacks + 1] = callback
+end
+
+function ModernUOLAbstract:RequireOrbApi(index)
+    local data = {
+        index = index,
+        loaded = false
+    }
+
+    table.insert(self.RequireAPI, data)
+end
+
+function ModernUOLAbstract:GetOrbApi(index)
+    return ModernUOLAbstract.SupportedOrbwalkers[index].Valid()
 end
 
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
