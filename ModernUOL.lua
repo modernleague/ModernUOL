@@ -125,10 +125,7 @@ end
 
 function ModernUOL:GetTarget(range, damageType, from)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
-        if range == nil then return _G.LegitOrbwalker:GetTarget() end
-        if range ~= nil and damageType == nil then return _G.LegitOrbwalker:GetTarget(range) end
-        if range ~= nil and damageType ~= nil and from == nil then return _G.LegitOrbwalker:GetTarget(range, damageType) end
-        if range ~= nil and damageType ~= nil and from ~= nil then return _G.LegitOrbwalker:GetTarget(range, damageType, from) end
+        return _G.LegitOrbwalker:GetTarget(range, damageType, from)
     end
 end
 
