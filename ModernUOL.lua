@@ -152,13 +152,13 @@ function ModernUOLAbstract:OnAsyncLoad(val)
         self.ActiveOrb = val
         
 
-        if table.getn(self.RequireAPI) == 0 then -- No orb api needed, fire on load
+        if table.getn(self.RequireAPI) == 0 or self:AllRequireApiLoaded() then -- No orb api needed, fire on load
             for i = 1, #self.OrbLoadCallbacks do
                 self.OrbLoadCallbacks[i](val)
             end
         else
             for _, data in pairs(self.RequireAPI) do
-                _G.LoadPaidScriptAsync(data.index, function() end)
+                if val ~= data.index then _G.LoadPaidScriptAsync(data.index, function() end) end
             end
         end
 
