@@ -1,7 +1,7 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.005
+local version = 1.006
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', _G.DEFAULT_COMMON_PATH, function(success)
@@ -149,12 +149,6 @@ function ModernUOLAbstract:OnAsyncLoad(val)
 
     end
 
-    -- if self.ActiveOrb ~= nil and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB and val == _G.PaidScript.AURORA_ORB then
-    --     for i = 1, #self.OrbLoadCallbacks do
-    --         self.OrbLoadCallbacks[i](val)
-    --     end
-    -- end
-
     if self.ActiveOrb then return end
 
     local valid_func = ModernUOLAbstract.SupportedOrbwalkers[val] and ModernUOLAbstract.SupportedOrbwalkers[val].Valid
@@ -172,19 +166,7 @@ function ModernUOLAbstract:OnAsyncLoad(val)
                 if val ~= data.index then _G.LoadPaidScriptAsync(data.index, function() end) end
             end
         end
-
-        -- if self.requireAuroraOrbAPI and self.ActiveOrb ~= _G.PaidScript.AURORA_ORB then
-        --     _G.LoadPaidScriptAsync(_G.PaidScript.AURORA_ORB, function() end)
-        -- else
-        --     for i = 1, #self.OrbLoadCallbacks do
-        --         self.OrbLoadCallbacks[i](val)
-        --     end
-        -- end
     end
-end
-
-function ModernUOLAbstract:RequireAuroraOrbAPI()
-    self.requireAuroraOrbAPI = true
 end
 
 function ModernUOLAbstract:OnOrbLoad(callback)
@@ -406,7 +388,7 @@ function ModernUOL:GetTarget(range, position)
     if self.ActiveOrb == _G.PaidScript.REBORN_ORB then
         return _G.LegitOrbwalker:GetHeroTarget(range, position)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
-        return _G.AuroraOrb.TargetSelector:Get(range, position)
+        return _G.AuroraOrb.Orbwalker:GetTargetSelectorTarget(range, position)
     end
 end
 
