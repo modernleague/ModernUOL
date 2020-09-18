@@ -1,10 +1,10 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.003
+local version = 1.005
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
-        DownloadInternalFileAsync('ModernUOL.lua', COMMON_PATH, function(success)
+        DownloadInternalFileAsync('ModernUOL.lua', _G.DEFAULT_COMMON_PATH, function(success)
             if success then
                 PrintChat("Press F5 to reload")
                 return
@@ -82,7 +82,18 @@ function ModernUOLAbstract:InitMenu()
 end
 
 function ModernUOLAbstract:OnTick()
-    if self.ActiveOrb or self.DefaultOrb.Loaded or (not self.DefaultOrb.Val) then
+    if self.ActiveOrb or self.DefaultOrb.Loaded then
+        return
+    end
+
+    for enum_val, data in pairs(ModernUOLAbstract.SupportedOrbwalkers) do
+        if data.Valid() then
+            self:OnAsyncLoad(enum_val)
+            return
+        end
+    end
+
+    if not self.DefaultOrb.Val then
         return
     end
 
