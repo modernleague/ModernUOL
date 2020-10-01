@@ -1,7 +1,7 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.006
+local version = 1.2
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', _G.DEFAULT_COMMON_PATH, function(success)
@@ -32,6 +32,13 @@ end
 local ModernUOLAbstract = class()
 
 ModernUOLAbstract.SupportedOrbwalkers = {
+    [_G.PaidScript.MED] =
+        {
+            Name = "Marksman's Efficient Dynamics",
+            Valid = function()
+                        return _G.MED
+                    end
+        },
     [_G.PaidScript.AURORA_ORB] =
         {
             Name = "Aurora Orbwalker",
@@ -212,6 +219,8 @@ function ModernUOL:IsAttacking()
         return _G.LegitOrbwalker:IsAttacking()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:IsAttacking()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return not _G.MED.CanMove()
     end
 end
 
@@ -226,6 +235,8 @@ function ModernUOL:IsOrbWalking()
         return _G.LegitOrbwalker:IsOrbWalking()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:IsOrbwalking()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.InAction()
     end
 end
 
@@ -240,6 +251,8 @@ function ModernUOL:CanAttack()
         return _G.LegitOrbwalker:CanAttack()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:CanAttack()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.CanAttack()
     end
 end
 
@@ -254,6 +267,8 @@ function ModernUOL:CanMove()
         return _G.LegitOrbwalker:CanMove()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:CanMove()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.CanMove()
     end
 end
 
@@ -269,6 +284,8 @@ function ModernUOL:MoveTo(position)
         return _G.LegitOrbwalker:MoveTo(position)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:Move(position)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.ToMove(position)
     end
 end
 
@@ -284,6 +301,8 @@ function ModernUOL:Attack(object)
         return _G.LegitOrbwalker:Attack(object)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:Attack(object)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.ToAttack(object)
     end
 end
 
@@ -299,6 +318,8 @@ function ModernUOL:BlockAttack(bool)
         return _G.LegitOrbwalker:BlockAttack(bool)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:BlockAttack(bool)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return bool and _G.MED.BlockAttack(math.huge) or _G.MED.BlockAttack(0)
     end
 end
 
@@ -314,6 +335,8 @@ function ModernUOL:BlockMove(bool)
         return _G.LegitOrbwalker:BlockMove(bool)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:BlockMove(bool)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return bool and _G.MED.BlockAttack(math.huge) or _G.MED.BlockAttack(0)
     end
 end
 
@@ -328,6 +351,8 @@ function ModernUOL:IsAttackBlocked()
         return _G.LegitOrbwalker:IsAttackBlocked()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:IsAttackBlocked()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsAttackBlocked()
     end
 end
 
@@ -342,6 +367,8 @@ function ModernUOL:IsMoveBlocked()
         return _G.LegitOrbwalker:IsMoveBlocked()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:IsMoveBlocked()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsMovementBlocked()
     end
 end
 
@@ -361,6 +388,10 @@ function ModernUOL:GetMode()
         elseif _G.AuroraOrb.Orbwalker:IsSupportKeyPress() then return "Support"
         elseif _G.AuroraOrb.Orbwalker:IsMixedKeyPress() then return "Harass"
         else return "none" end
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        local map = {["carry"] = "Combo", ["mixed"] = "Harass", ["last_hit"] = "Lasthit", ["lane_clear"] = "Waveclear", ["jungle_clear"] = "Waveclear"}
+
+        return map[_G.MED.GetOrbwalkerMode()] or "none"
     end
 end
 
@@ -375,6 +406,8 @@ function ModernUOL:ResetAA()
         return _G.LegitOrbwalker:ResetAA()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:ResetAttack()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.ResetAutoAttack()
     end
 end
 
@@ -389,6 +422,8 @@ function ModernUOL:GetTarget(range, position)
         return _G.LegitOrbwalker:GetHeroTarget(range, position)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetTargetSelectorTarget(range, position)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        _G.MED.GetTarget(range, position)
     end
 end
 
@@ -403,6 +438,8 @@ function ModernUOL:GetCurrentTarget()
         return _G.LegitOrbwalker:GetTarget()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetCurrentTarget()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.GetOrbwalkerTarget()
     end
 end
 
@@ -417,6 +454,8 @@ function ModernUOL:SetTarget(target, time)
         return _G.LegitOrbwalker:SetTarget(target, time)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:SetTarget(target, time)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.ForceTarget(target)
     end
 end
 
@@ -431,6 +470,8 @@ function ModernUOL:UnSetTarget()
         return _G.LegitOrbwalker:UnSetTarget()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:UnSetTarget()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.RemoveForcedTarget()
     end
 end
 
@@ -445,6 +486,8 @@ function ModernUOL:GetForcedTarget()
         return _G.LegitOrbwalker:GetForcedTarget()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetForcedTarget()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.GetForcedTarget()
     end
 end
 
@@ -459,6 +502,8 @@ function ModernUOL:WaitingForMinion()
         return _G.LegitOrbwalker:WaitingForMinion()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:WaitingForMinion()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.WaitingForMinion()
     end
 end
 
@@ -473,6 +518,8 @@ function ModernUOL:GetMinions()
         return _G.LegitOrbwalker:GetMinions()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Minion:GetEnemy(function(a) return _G.AuroraOrb.Minion:IsLaneMinion(a) end)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return ObjectManager:GetEnemyMinions() -- to do
     end
 end
 
@@ -487,6 +534,8 @@ function ModernUOL:HpPred(unit, time)
         return _G.LegitOrbwalker:HpPred(unit, time)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Health:Get(unit, time * 1000)
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.GetPredictedHealth(unit, time)
     end
 end
 
@@ -501,6 +550,8 @@ function ModernUOL:AutoAttackCooldown()
         return _G.LegitOrbwalker:AutoAttackCooldown()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetAutoAttackCooldownRemaining()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.GetNextAutoAttackTime()
     end
 end
 
@@ -515,6 +566,8 @@ function ModernUOL:AutoAttackOnCooldown()
         return _G.LegitOrbwalker:AutoAttackOnCooldown()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:AutoAttackOnCooldown()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.WaitingForNextAutoAttack()
     end
 end
 
@@ -529,6 +582,9 @@ function ModernUOL:AttackSpeed()
         return _G.LegitOrbwalker:AttackSpeed()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.MyHero:GetAttackSpeed()
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        local attackSpeed = myHero.characterIntermediate.baseAttackSpeed * myHero.characterIntermediate.attackSpeedMod -- to do
+        return attackSpeed
     end
 end
 
@@ -543,6 +599,9 @@ function ModernUOL:GetProjectileSpeed(gameObject)
         return _G.LegitOrbwalker:GetProjectileSpeed(gameObject)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetProjectileSpeed(gameObject)
+     elseif self.ActiveOrb == _G.PaidScript.MED then
+        local missileSpeed = gameObject.basicAttack.speed > 0 and gameObject.basicAttack.speed or math.huge -- to do
+        return missileSpeed
     end
 end
 
@@ -571,6 +630,9 @@ function ModernUOL:AddCallback(callback, func)
         elseif callback == "OnBeforeMovement" then return  _G.AuroraOrb.Orbwalker:RegisterOnBeforeMovementFunction(func)
         elseif callback == "CanMove" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanMoveFunction(func)
         elseif callback == "CanAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanAttackFunction(func) end
+    elseif self.ActiveOrb == _G.PaidScript.MED then -- to do
+        if callback == "OnAfterAttack" then return  _G.MED.AddAfterAttackCallback(func)
+        elseif callback == "OnBeforeAttack" then return _G.MED.AddPreAttackCallback(func) end
     end
 end
 
