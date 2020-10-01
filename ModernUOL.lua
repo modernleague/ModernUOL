@@ -6,7 +6,7 @@ GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', _G.DEFAULT_COMMON_PATH, function(success)
             if success then
-                PrintChat("Press F5 to reload")
+                PrintChat("Press F6 to reload")
                 return
             end
         end)
