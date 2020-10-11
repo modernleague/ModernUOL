@@ -645,6 +645,7 @@ function ModernUOL:AddCallback(callback, func)
         elseif callback == "CanAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanAttackFunction(func) end
     elseif self.ActiveOrb == _G.PaidScript.MED then -- to do
         if callback == "OnAfterAttack" then return  _G.MED.AddAfterAttackCallback(func)
+        elseif callback == "OnBeforeMovement" then return _G.MED.AddPreMovementCallback(func)
         elseif callback == "OnBeforeAttack" then return _G.MED.AddPreAttackCallback(func) end
     end
 end
