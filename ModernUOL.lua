@@ -1,7 +1,7 @@
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-local version = 1.33
+local version = 1.34
 GetInternalWebResultAsync('ModernUOL.version', function(v)
     if v and tonumber(v) > version then
         DownloadInternalFileAsync('ModernUOL.lua', _G.DEFAULT_COMMON_PATH, function(success)
@@ -233,7 +233,7 @@ function ModernUOL:IsAttacking()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:IsAttacking()
     elseif self.ActiveOrb == _G.PaidScript.MED then
-        return not _G.MED.CanMove()
+        return _G.MED.IsAttacking()
     end
 end
 
@@ -349,7 +349,7 @@ function ModernUOL:BlockMove(bool)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:BlockMove(bool)
     elseif self.ActiveOrb == _G.PaidScript.MED then
-        return bool and _G.MED.BlockAttack(math.huge) or _G.MED.BlockAttack(0)
+        return bool and _G.MED.BlockMovement(math.huge) or _G.MED.BlockMovement(0)
     end
 end
 
@@ -403,7 +403,6 @@ function ModernUOL:GetMode()
         else return "none" end
     elseif self.ActiveOrb == _G.PaidScript.MED then
         local map = {["carry"] = "Combo", ["mixed"] = "Harass", ["last_hit"] = "Lasthit", ["lane_clear"] = "Waveclear", ["jungle_clear"] = "Waveclear"}
-
         return map[_G.MED.GetOrbwalkerMode()] or "none"
     end
 end
@@ -436,7 +435,7 @@ function ModernUOL:GetTarget(range, position)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetTargetSelectorTarget(range, position)
     elseif self.ActiveOrb == _G.PaidScript.MED then
-        _G.MED.GetTarget(range, position)
+        return _G.MED.GetTarget(range, position)
     end
 end
 
@@ -532,7 +531,7 @@ function ModernUOL:GetMinions()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Minion:GetEnemy(function(a) return _G.AuroraOrb.Minion:IsLaneMinion(a) end)
     elseif self.ActiveOrb == _G.PaidScript.MED then
-        return ObjectManager:GetEnemyMinions() -- to do
+        return _G.MED.MinionManager()
     end
 end
 
@@ -596,7 +595,7 @@ function ModernUOL:AttackSpeed()
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.MyHero:GetAttackSpeed()
     elseif self.ActiveOrb == _G.PaidScript.MED then
-        local attackSpeed = myHero.characterIntermediate.baseAttackSpeed * myHero.characterIntermediate.attackSpeedMod -- to do
+        local attackSpeed = myHero.characterIntermediate.baseAttackSpeed * myHero.characterIntermediate.attackSpeedMod
         return attackSpeed
     end
 end
@@ -612,9 +611,8 @@ function ModernUOL:GetProjectileSpeed(gameObject)
         return _G.LegitOrbwalker:GetProjectileSpeed(gameObject)
     elseif self.ActiveOrb == _G.PaidScript.AURORA_ORB then
         return _G.AuroraOrb.Orbwalker:GetProjectileSpeed(gameObject)
-     elseif self.ActiveOrb == _G.PaidScript.MED then
-        local missileSpeed = gameObject.basicAttack.speed > 0 and gameObject.basicAttack.speed or math.huge -- to do
-        return missileSpeed
+    elseif self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.GetProjectileSpeed(gameObject)
     end
 end
 
@@ -622,6 +620,9 @@ end
     function: ModernUOL:AddCallback(callback, func)
     Parameter: string, function
         callback's:
+            OnResetAA -- Trıgger when aa has been reset
+            OnPreTick -- Trigger before orbwalker core tick executed
+            OnOutofRange -- Trigger when the target out of auto attack range
             OnUnKillable -- Trigger if it's impossible to last hit | arg: GameObject//minion
             OnAttack -- Triggers after an AA is recognized
             OnAfterAttack -- Triggers after an AA is done
@@ -643,10 +644,14 @@ function ModernUOL:AddCallback(callback, func)
         elseif callback == "OnBeforeMovement" then return  _G.AuroraOrb.Orbwalker:RegisterOnBeforeMovementFunction(func)
         elseif callback == "CanMove" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanMoveFunction(func)
         elseif callback == "CanAttack" then return  _G.AuroraOrb.Orbwalker:RegisterOnCanAttackFunction(func) end
-    elseif self.ActiveOrb == _G.PaidScript.MED then -- to do
+    elseif self.ActiveOrb == _G.PaidScript.MED then
         if callback == "OnAfterAttack" then return  _G.MED.AddAfterAttackCallback(func)
         elseif callback == "OnBeforeMovement" then return _G.MED.AddPreMovementCallback(func)
-        elseif callback == "OnBeforeAttack" then return _G.MED.AddPreAttackCallback(func) end
+        elseif callback == "OnBeforeAttack" then return _G.MED.AddPreAttackCallback(func)
+        elseif callback == "OnOutofRange" then return _G.MED.AddOutofRangeCallback(func)
+        elseif callback == "OnPreTick" then return _G.MED.AddPreTickCallback(func)
+        elseif callback == "OnResetAA" then return _G.MED.AddResetAutoAttackCallback(func)
+        elseif callback == "OnUnKillable" then return _G.MED.AddCanNotLasthitCallback(func) end
     end
 end
 
@@ -677,6 +682,80 @@ function ModernUOL:GetCallbacks()
         return _G.AuroraOrb.Orbwalker:GetCallbacks()
     end
 end
+
+--[[
+    function: ModernUOL:GetWindwall()
+    Parameter: D3DXVECTOR3
+    Return: boolean
+    Comment: Return true if there is Yasuo windwall (made for only auto-attacks)
+--]]
+function ModernUOL:GetWindwall(sP, eP)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsWindwallValid(sP, eP)
+    end
+end
+
+--[[
+    function: ModernUOL:IsHighPriority()
+    Parameter: gameObject, number(1-5)
+    Return: boolean
+    Comment: Return true if gameObject is high/higher priority by target selector
+--]]
+function ModernUOL:IsHighPriority(gameObject, priority)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsHighPriority(gameObject, priority)
+    end
+end
+
+--[[
+    function: ModernUOL:IsKillable()
+    Parameter: gameObject
+    Return: boolean
+    Comment: Return true if possible to kill gameObject with auto-attack in predicted health
+--]]
+function ModernUOL:IsKillable(gameObject)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.CanLasthit(gameObject)
+    end
+end
+
+--[[
+    function: ModernUOL:IsUnkillable()
+    Parameter: gameObject
+    Return: boolean
+    Comment: Return true if impossible to kill gameObject with auto-attack in predicted health
+--]]
+function ModernUOL:IsUnkillable(gameObject)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.CanNotLasthit(gameObject)
+    end
+end
+
+--[[
+    function: ModernUOL:IsMinionValid()
+    Parameter: gameObject(minion), int(optional), D3DXVECTOR3(optional), boolean(optional)
+    Return: boolean
+    Comment: Return true if gameObject is matched with requirements of a valid gameObject(minion)
+--]]
+function ModernUOL:IsValidMinion(gameObject, range, position, ignoreTeam)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsMinionValid(gameObject, range, position, ignoreTeam)
+    end
+end
+
+--[[
+    function: ModernUOL:IsTargetValid()
+    Parameter: gameObject, int(optional), D3DXVECTOR3(optional), boolean(optional)
+    Return: boolean
+    Comment: Return true if gameObject is matched with requirements of a valid gameObject(checks buffs on target)
+--]]
+function ModernUOL:IsValidTarget(gameObject, range, position, ignoreTeam)
+    if self.ActiveOrb == _G.PaidScript.MED then
+        return _G.MED.IsTargetValid(gameObject, range, position, ignoreTeam)
+    end
+end
+
+
 
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
