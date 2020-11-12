@@ -333,7 +333,13 @@ function ModernUOL:Attack(object)
     elseif self.ActiveOrb == _G.PaidScript.MED then
         return _G.MED.ToAttack(object)
     elseif self.ActiveOrb == _G.PaidScript.AUTO_CARRY then
-        return _G.AUTO_CARRY:Attack()
+        return _G.AUTO_CARRY:Attack(object)
+    end
+end
+
+function ModernUOL:BlockLastHit(bool)
+    if self.ActiveOrb == _G.PaidScript.AUTO_CARRY then
+        return _G.AUTO_CARRY:BlockLastHit(bool)
     end
 end
 
